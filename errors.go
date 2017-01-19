@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-var errorTemplates errorTemplate = errorTemplate{template.New("errors-new"),sync.RWMutex{}}
+var errorTemplates errorTemplate = errorTemplate{template.New("errors-new"), sync.RWMutex{}}
 
 // template.Template is not thread-safe for writing, so some locking is done
 // sync.RWMutex is used for efficiently locking when new templates are created
@@ -230,6 +230,10 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 	case *NumberLTError:
 		t = "number_lt"
 		d = locale.NumberLT()
+	case *CustomKeywordError:
+		ckerr := err.(*CustomKeywordError)
+		t = ckerr.Keyword
+		d = ckerr.LocaleStr
 	}
 
 	err.SetType(t)
@@ -244,7 +248,6 @@ func newError(err ResultError, context *jsonContext, value interface{}, locale l
 // format and converts it to a string with replacements. The fields come
 // from the ErrorDetails struct and vary for each type of error.
 func formatErrorDescription(s string, details ErrorDetails) string {
-
 	var tpl *template.Template
 	var descrAsBuffer bytes.Buffer
 	var err error

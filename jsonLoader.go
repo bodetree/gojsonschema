@@ -52,6 +52,10 @@ type JSONLoader interface {
 	LoaderFactory() JSONLoaderFactory
 }
 
+type CustomKeyworder interface {
+	getCustomKeywords() []CustomKeyword
+}
+
 type JSONLoaderFactory interface {
 	New(source string) JSONLoader
 }
@@ -88,8 +92,9 @@ func (o osFileSystem) Open(name string) (http.File, error) {
 // references are used to load JSONs from files and HTTP
 
 type jsonReferenceLoader struct {
-	fs     http.FileSystem
-	source string
+	fs             http.FileSystem
+	source         string
+	customKeywords []CustomKeyword
 }
 
 func (l *jsonReferenceLoader) JsonSource() interface{} {
@@ -104,6 +109,14 @@ func (l *jsonReferenceLoader) LoaderFactory() JSONLoaderFactory {
 	return &FileSystemJSONLoaderFactory{
 		fs: l.fs,
 	}
+}
+
+func (l *jsonReferenceLoader) AddCustomKeyword(ck CustomKeyword) {
+	l.customKeywords = append(l.customKeywords, ck)
+}
+
+func (l *jsonReferenceLoader) getCustomKeywords() []CustomKeyword {
+	return l.customKeywords
 }
 
 // NewReferenceLoader returns a JSON reference loader using the given source and the local OS file system.
@@ -206,7 +219,8 @@ func (l *jsonReferenceLoader) loadFromFile(path string) (interface{}, error) {
 // JSON string loader
 
 type jsonStringLoader struct {
-	source string
+	source         string
+	customKeywords []CustomKeyword
 }
 
 func (l *jsonStringLoader) JsonSource() interface{} {
@@ -219,6 +233,14 @@ func (l *jsonStringLoader) JsonReference() (gojsonreference.JsonReference, error
 
 func (l *jsonStringLoader) LoaderFactory() JSONLoaderFactory {
 	return &DefaultJSONLoaderFactory{}
+}
+
+func (l *jsonStringLoader) AddCustomKeyword(ck CustomKeyword) {
+	l.customKeywords = append(l.customKeywords, ck)
+}
+
+func (l *jsonStringLoader) getCustomKeywords() []CustomKeyword {
+	return l.customKeywords
 }
 
 func NewStringLoader(source string) *jsonStringLoader {
@@ -234,7 +256,8 @@ func (l *jsonStringLoader) LoadJSON() (interface{}, error) {
 // JSON bytes loader
 
 type jsonBytesLoader struct {
-	source []byte
+	source         []byte
+	customKeywords []CustomKeyword
 }
 
 func (l *jsonBytesLoader) JsonSource() interface{} {
@@ -249,6 +272,14 @@ func (l *jsonBytesLoader) LoaderFactory() JSONLoaderFactory {
 	return &DefaultJSONLoaderFactory{}
 }
 
+func (l *jsonBytesLoader) AddCustomKeyword(ck CustomKeyword) {
+	l.customKeywords = append(l.customKeywords, ck)
+}
+
+func (l *jsonBytesLoader) getCustomKeywords() []CustomKeyword {
+	return l.customKeywords
+}
+
 func NewBytesLoader(source []byte) *jsonBytesLoader {
 	return &jsonBytesLoader{source: source}
 }
@@ -261,7 +292,8 @@ func (l *jsonBytesLoader) LoadJSON() (interface{}, error) {
 // used to load JSONs from the code as maps, interface{}, structs ...
 
 type jsonGoLoader struct {
-	source interface{}
+	source         interface{}
+	customKeywords []CustomKeyword
 }
 
 func (l *jsonGoLoader) JsonSource() interface{} {
@@ -274,6 +306,14 @@ func (l *jsonGoLoader) JsonReference() (gojsonreference.JsonReference, error) {
 
 func (l *jsonGoLoader) LoaderFactory() JSONLoaderFactory {
 	return &DefaultJSONLoaderFactory{}
+}
+
+func (l *jsonGoLoader) AddCustomKeyword(ck CustomKeyword) {
+	l.customKeywords = append(l.customKeywords, ck)
+}
+
+func (l *jsonGoLoader) getCustomKeywords() []CustomKeyword {
+	return l.customKeywords
 }
 
 func NewGoLoader(source interface{}) *jsonGoLoader {

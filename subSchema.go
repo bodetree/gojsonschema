@@ -134,6 +134,9 @@ type subSchema struct {
 	anyOf []*subSchema
 	allOf []*subSchema
 	not   *subSchema
+
+	// validation : custom keywords
+	customKeywords []customKeywordValue
 }
 
 func (s *subSchema) AddEnum(i interface{}) error {

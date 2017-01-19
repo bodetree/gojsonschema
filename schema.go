@@ -69,6 +69,10 @@ func NewSchema(l JSONLoader) (*Schema, error) {
 		d.pool.SetStandaloneDocument(doc)
 	}
 
+	if keywordLoader, ok := l.(CustomKeyworder); ok {
+		d.customKeywords = keywordLoader.getCustomKeywords()
+	}
+
 	err = d.parse(doc)
 	if err != nil {
 		return nil, err
@@ -82,6 +86,7 @@ type Schema struct {
 	rootSchema        *subSchema
 	pool              *schemaPool
 	referencePool     *schemaReferencePool
+	customKeywords    []CustomKeyword
 }
 
 func (d *Schema) parse(document interface{}) error {
@@ -794,6 +799,19 @@ func (d *Schema) parseSchema(documentNode interface{}, currentSchema *subSchema)
 				Locale.MustBeOfAn(),
 				ErrorDetails{"x": KEY_NOT, "y": TYPE_OBJECT},
 			))
+		}
+	}
+
+	// validation : custom keywords
+	for _, ck := range d.customKeywords {
+		if existsMapKey(m, ck.GetKeyword()) {
+			val := customKeywordValue{}
+			val.customKeyword = ck
+			val.value = m[ck.GetKeyword()]
+			if err := ck.ValidateSchema(val.value); err != nil {
+				return err
+			}
+			currentSchema.customKeywords = append(currentSchema.customKeywords, val)
 		}
 	}
 

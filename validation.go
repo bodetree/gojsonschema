@@ -107,6 +107,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 		currentSubSchema.validateSchema(currentSubSchema, currentNode, result, context)
 		v.validateCommon(currentSubSchema, currentNode, result, context)
+		v.validateCustomKeywords(currentSubSchema, currentNode, result, context)
 
 	} else { // Not a null value
 
@@ -141,6 +142,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 			v.validateNumber(currentSubSchema, value, result, context)
 			v.validateCommon(currentSubSchema, value, result, context)
 			v.validateString(currentSubSchema, value, result, context)
+			v.validateCustomKeywords(currentSubSchema, currentNode, result, context)
 
 		} else {
 
@@ -172,6 +174,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 				v.validateArray(currentSubSchema, castCurrentNode, result, context)
 				v.validateCommon(currentSubSchema, castCurrentNode, result, context)
+				v.validateCustomKeywords(currentSubSchema, currentNode, result, context)
 
 			// Map => JSON object
 
@@ -198,6 +201,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 
 				v.validateObject(currentSubSchema, castCurrentNode, result, context)
 				v.validateCommon(currentSubSchema, castCurrentNode, result, context)
+				v.validateCustomKeywords(currentSubSchema, currentNode, result, context)
 
 				for _, pSchema := range currentSubSchema.propertiesChildren {
 					nextNode, ok := castCurrentNode[pSchema.property]
@@ -230,6 +234,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 				v.validateNumber(currentSubSchema, value, result, context)
 				v.validateCommon(currentSubSchema, value, result, context)
 				v.validateString(currentSubSchema, value, result, context)
+				v.validateCustomKeywords(currentSubSchema, currentNode, result, context)
 
 			case reflect.String:
 
@@ -252,6 +257,7 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 				v.validateNumber(currentSubSchema, value, result, context)
 				v.validateCommon(currentSubSchema, value, result, context)
 				v.validateString(currentSubSchema, value, result, context)
+				v.validateCustomKeywords(currentSubSchema, currentNode, result, context)
 
 			}
 
@@ -825,6 +831,26 @@ func (v *subSchema) validateNumber(currentSubSchema *subSchema, value interface{
 					},
 				)
 			}
+		}
+	}
+
+	result.incrementScore()
+}
+
+func (v *subSchema) validateCustomKeywords(currentSubSchema *subSchema, value interface{}, result *Result, context *jsonContext) {
+	if len(currentSubSchema.customKeywords) == 0 {
+		return
+	}
+
+	for _, ck := range currentSubSchema.customKeywords {
+		err, details := ck.customKeyword.Validate(ck.value, value)
+		if err != nil {
+			result.addError(
+				err,
+				context,
+				value,
+				details,
+			)
 		}
 	}
 
